@@ -2,292 +2,553 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRO AQUA LIGHT CONTROL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PRO AQUA LIGHT - Commercial Aquarium Lighting Controller</title>
+  
+  <!-- PWA & Mobile Viewport Meta Tags -->
+  <meta name="theme-color" content="#0b1017">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ProAquaLight">
+  <link rel="apple-touch-icon" href="https://placehold.co/192x192/0b1017/00e5ff?text=AQUA+PRO">
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0088cc">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; --accent-color: #0088cc; --danger-color: #d9534f; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-    .container { max-width: 1000px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-    .device-input-group { display: flex; gap: 10px; margin-bottom: 8px; }
-    .device-input { flex: 1; padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444; font-size: 15px; }
-    .btn { padding: 10px 20px; background: var(--accent-color); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn:hover { opacity: 0.9; }
-    .btn-danger { background: var(--danger-color); }
-    .btn-sm { padding: 6px 12px; font-size: 13px; }
-    .slider-group { margin-bottom: 16px; }
-    .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
-    input[type=range] { width: 100%; height: 8px; border-radius: 4px; background: #333; outline: none; -webkit-appearance: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
-    
-    /* 星期选择器样式 */
-    .days-picker { display: flex; gap: 8px; margin: 12px 0; }
-    .day-checkbox { display: none; }
-    .day-label { flex: 1; text-align: center; padding: 8px; background: #2a2a2a; border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid #444; user-select: none; }
-    .day-checkbox:checked + .day-label { background: var(--accent-color); border-color: var(--accent-color); font-weight: bold; }
 
-    /* 时间节点表格样式 */
-    .schedule-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-    .schedule-table th, .schedule-table td { padding: 8px; text-align: center; border-bottom: 1px solid #333; font-size: 13px; }
-    .schedule-table input { width: 80%; padding: 6px; border-radius: 6px; background: #2a2a2a; color: #fff; border: 1px solid #444; text-align: center; }
-    .status-text { font-size: 13px; color: #0088cc; }
-    .table-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js for Visual Curve rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0b1017',
+              card: '#141c27',
+              border: '#233044',
+              accent: '#00e5ff',
+              accentGlow: 'rgba(0,229,255,0.15)',
+              red: '#ff4b4b',
+              green: '#2ecc71',
+              white: '#f1f5f9',
+              blue: '#3b82f6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0b1017;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .glass-card {
+      background: rgba(20, 28, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #1e293b;
+      border-radius: 8px;
+      height: 8px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      border: 2px solid #ffffff;
+    }
+    .slider-r::-webkit-slider-thumb { background: #ff4b4b; }
+    .slider-g::-webkit-slider-thumb { background: #2ecc71; }
+    .slider-w::-webkit-slider-thumb { background: #f8fafc; }
+    .slider-b::-webkit-slider-thumb { background: #3b82f6; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col pb-10">
 
-<div class="container">
-  <div class="header">
-    <h2>🐠 PRO AQUA LIGHT SYSTEM</h2>
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-50 glass-card border-b border-brand-border px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-fish-fins text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-wider text-white flex items-center gap-2">
+          PRO AQUA LIGHT
+          <span class="text-[10px] bg-brand-accent/10 text-brand-accent border border-brand-accent/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.4</span>
+        </h1>
+        <p class="text-xs text-gray-400" id="header-ip-label">Target: 192.168.100.158</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="openSettingsModal()" class="w-9 h-9 rounded-lg bg-brand-border/50 flex items-center justify-center text-gray-300 hover:text-white transition">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto w-full px-4 pt-4 space-y-4 flex-grow">
+
+    <!-- Quick Override Preset Buttons -->
+    <section class="glass-card rounded-2xl p-3 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+      <button onclick="activateOverride('normal')" id="override-normal" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-brand-accent/20 border border-brand-accent/50 text-brand-accent text-xs font-semibold flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-clock"></i>
+        Auto Schedule
+      </button>
+      <button onclick="activateOverride('viewing')" id="override-viewing" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-eye text-yellow-400"></i>
+        30M View Boost
+      </button>
+      <button onclick="activateOverride('feed')" id="override-feed" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-bowl-food text-emerald-400"></i>
+        Feed Mode
+      </button>
+      <button onclick="activateOverride('night')" id="override-night" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-moon text-blue-400"></i>
+        Moonlight 5%
+      </button>
+    </section>
+
+    <!-- Schedule Group Selector (Tabs) -->
+    <section class="space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Schedule Profiles</span>
+        <button onclick="addNewScheduleGroup()" class="text-xs text-brand-accent hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-plus"></i> Add Profile
+        </button>
+      </div>
+      
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="schedule-tabs-container"></div>
+    </section>
+
+    <!-- Day-Mask Checkbox Selector -->
+    <section class="glass-card rounded-2xl p-3 space-y-2">
+      <div class="flex items-center justify-between text-xs text-gray-300">
+        <span class="font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-calendar-days text-brand-accent"></i>
+          Active Days Assignment
+        </span>
+        <span id="day-mask-badge" class="font-mono text-[11px] bg-slate-800 text-brand-accent px-2 py-0.5 rounded border border-brand-accent/20">
+          Days Mask: 62
+        </span>
+      </div>
+      
+      <div class="grid grid-cols-7 gap-1.5" id="day-selector-grid"></div>
+    </section>
+
+    <!-- 24-Hour Spectrum Chart -->
+    <section class="glass-card rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-brand-accent"></i>
+          24-Hour Lighting Curve Spectrum
+        </h2>
+        <div class="flex items-center space-x-2 text-[11px]">
+          <span class="inline-flex items-center gap-1 text-red-400"><span class="w-2 h-2 rounded-full bg-red-500"></span>R</span>
+          <span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>G</span>
+          <span class="inline-flex items-center gap-1 text-gray-200"><span class="w-2 h-2 rounded-full bg-slate-200"></span>W</span>
+          <span class="inline-flex items-center gap-1 text-blue-400"><span class="w-2 h-2 rounded-full bg-blue-500"></span>B</span>
+        </div>
+      </div>
+
+      <div class="relative w-full h-56">
+        <canvas id="spectrumChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Node Editor Section -->
+    <section class="glass-card rounded-2xl p-4 space-y-4">
+      <div class="flex items-center justify-between border-b border-brand-border/60 pb-3">
+        <div class="flex items-center space-x-2">
+          <h2 class="text-sm font-bold text-white">Time Node Timeline</h2>
+          <span class="text-xs text-gray-400" id="node-count-label">(0 Nodes)</span>
+        </div>
+        <button onclick="addNewNode()" class="px-3 py-1.5 rounded-lg bg-brand-accent/20 hover:bg-brand-accent/30 text-brand-accent text-xs font-semibold border border-brand-accent/30 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-plus"></i>
+          Add Time Node
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="nodes-chip-container"></div>
+
+      <!-- Active Node Spectrum Sliders Card -->
+      <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-gray-400">Node Time:</span>
+            <input type="time" id="node-time-input" onchange="updateNodeTime(this.value)" class="bg-slate-800 border border-slate-700 text-white font-mono text-sm px-2.5 py-1 rounded-lg focus:outline-none focus:border-brand-accent">
+          </div>
+          <button onclick="deleteCurrentNode()" id="delete-node-btn" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition">
+            <i class="fa-solid fa-trash-can"></i> Delete Node
+          </button>
+        </div>
+
+        <!-- 4 Channel PWM Sliders -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-red-400 font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-circle text-[8px]"></i> Red Channel (PWM 1)
+              </span>
+              <span id="val-r" class="font-mono text-white font-bold">0%</span>
+            </div>
+            <input type="range" id="slider-r" min="0" max="100" value="0" oninput="updateSliderValue('r', this.value)" class="w-full slider-r">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-emerald-400 font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-circle text-[8px]"></i> Green Channel (PWM 2)
+              </span>
+              <span id="val-g" class="font-mono text-white font-bold">0%</span>
+            </div>
+            <input type="range" id="slider-g" min="0" max="100" value="0" oninput="updateSliderValue('g', this.value)" class="w-full slider-g">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-200 font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-circle text-[8px]"></i> White Channel (PWM 3)
+              </span>
+              <span id="val-w" class="font-mono text-white font-bold">0%</span>
+            </div>
+            <input type="range" id="slider-w" min="0" max="100" value="0" oninput="updateSliderValue('w', this.value)" class="w-full slider-w">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-blue-400 font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-circle text-[8px]"></i> Blue Channel (PWM 4)
+              </span>
+              <span id="val-b" class="font-mono text-white font-bold">0%</span>
+            </div>
+            <input type="range" id="slider-b" min="0" max="100" value="0" oninput="updateSliderValue('b', this.value)" class="w-full slider-b">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLI Payload Engine -->
+    <section class="glass-card rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-terminal text-brand-accent"></i>
+          <h2 class="text-sm font-bold text-white">OpenBeken Hardware Payload Engine</h2>
+        </div>
+        <span class="text-[11px] text-gray-400">Target: BL602 Local Execution</span>
+      </div>
+
+      <div class="bg-black/80 rounded-xl p-3 border border-slate-800 font-mono text-xs text-emerald-400 space-y-2 overflow-x-auto">
+        <div class="flex items-center justify-between text-[10px] text-gray-500 border-b border-gray-800 pb-1">
+          <span>COMPILED CLI COMMANDS (`addClockEvent` Sequence)</span>
+          <button onclick="copyPayloadToClipboard()" class="hover:text-brand-accent transition flex items-center gap-1">
+            <i class="fa-regular fa-copy"></i> Copy Payload
+          </button>
+        </div>
+        <pre id="payload-preview" class="whitespace-pre-wrap leading-relaxed">Generating hardware payload...</pre>
+      </div>
+
+      <div class="pt-1 flex flex-col sm:flex-row items-center gap-3">
+        <button onclick="syncToHardware()" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+          <i class="fa-solid fa-microchip"></i>
+          Sync to Light Hardware (BL602)
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-5 space-y-4 border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-brand-accent"></i>
+          Hardware Settings
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Controller Local IP Address</label>
+          <input type="text" id="target-ip" value="192.168.100.158" class="w-full bg-slate-800 border border-slate-700 text-white font-mono px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="saveSettings()" class="w-full py-2.5 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs hover:bg-cyan-300 transition">
+          Save Settings
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- 1. 设备连接与状态同步 -->
-  <div class="card">
-    <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 6px;">TARGET LIGHT IP</label>
-    <div class="device-input-group">
-      <input type="text" id="deviceIP" class="device-input" placeholder="e.g. 192.168.100.158">
-      <button class="btn" onclick="connectAndReadStatus()">CONNECT & READ</button>
-    </div>
-    <div id="connectionStatus" class="status-text">Ready to connect...</div>
-  </div>
-
-  <!-- 2. 4 路手动实时调光 -->
-  <div class="card">
-    <h3>Manual Dimming (4-CH)</h3>
-    <div class="slider-group">
-      <div class="slider-header"><span>Ch1 - Red (R)</span><span id="val-ch1">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="1" id="slider-ch1" min="0" max="100" value="0">
-    </div>
-    <div class="slider-group">
-      <div class="slider-header"><span>Ch2 - Green (G)</span><span id="val-ch2">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="2" id="slider-ch2" min="0" max="100" value="0">
-    </div>
-    <div class="slider-group">
-      <div class="slider-header"><span>Ch3 - White (W)</span><span id="val-ch3">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="3" id="slider-ch3" min="0" max="100" value="0">
-    </div>
-    <div class="slider-group">
-      <div class="slider-header"><span>Ch4 - Blue (B)</span><span id="val-ch4">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="4" id="slider-ch4" min="0" max="100" value="0">
+  <!-- Modals for Add Profile / Add Node -->
+  <div id="add-profile-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 space-y-4 border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-folder-plus text-brand-accent"></i>
+          Create Schedule Profile
+        </h3>
+        <button onclick="closeAddProfileModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 mb-1.5">Profile Name</label>
+        <input type="text" id="new-profile-name-input" placeholder="e.g., Holiday Mode" class="w-full bg-slate-800 border border-slate-700 text-white font-sans text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <button onclick="closeAddProfileModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 font-medium text-xs">Cancel</button>
+        <button onclick="confirmCreateProfile()" class="flex-1 py-2 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs">Create</button>
+      </div>
     </div>
   </div>
 
-  <!-- 3. 24 小时光谱曲线 & 节点增减 & 周期选择 -->
-  <div class="card">
-    <h3>24H Profile & Dynamic Time Nodes</h3>
-    
-    <!-- 星期重复选择器 -->
-    <label style="font-size: 12px; color: #aaa;">REPEAT DAYS</label>
-    <div class="days-picker">
-      <input type="checkbox" id="d1" class="day-checkbox" value="1" checked><label for="d1" class="day-label">Mon</label>
-      <input type="checkbox" id="d2" class="day-checkbox" value="2" checked><label for="d2" class="day-label">Tue</label>
-      <input type="checkbox" id="d3" class="day-checkbox" value="4" checked><label for="d3" class="day-label">Wed</label>
-      <input type="checkbox" id="d4" class="day-checkbox" value="8" checked><label for="d4" class="day-label">Thu</label>
-      <input type="checkbox" id="d5" class="day-checkbox" value="16" checked><label for="d5" class="day-label">Fri</label>
-      <input type="checkbox" id="d6" class="day-checkbox" value="32" checked><label for="d6" class="day-label">Sat</label>
-      <input type="checkbox" id="d0" class="day-checkbox" value="64" checked><label for="d0" class="day-label">Sun</label>
-    </div>
-
-    <!-- 曲线图表渲染 -->
-    <div style="height: 220px; position: relative; margin-bottom: 16px;">
-      <canvas id="lightChart"></canvas>
-    </div>
-
-    <!-- 动态节点表格 -->
-    <table class="schedule-table">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>R%</th>
-          <th>G%</th>
-          <th>W%</th>
-          <th>B%</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="nodesTableBody"></tbody>
-    </table>
-
-    <div class="table-actions">
-      <button class="btn btn-sm" onclick="addTimeNode()">+ Add Time Node</button>
-      <button class="btn" onclick="syncScheduleToDevice()">Sync Schedule to Light</button>
+  <div id="add-node-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 space-y-4 border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-regular fa-clock text-brand-accent"></i> Add Time Node
+        </h3>
+        <button onclick="closeAddNodeModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 mb-1.5">Select Time (24h Format)</label>
+        <input type="time" id="new-node-time-input" value="12:00" class="w-full bg-slate-800 border border-slate-700 text-white font-mono text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <button onclick="closeAddNodeModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 font-medium text-xs">Cancel</button>
+        <button onclick="confirmAddNode()" class="flex-1 py-2 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs">Add Node</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
-  }
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-brand-accent text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 opacity-0 transition-all pointer-events-none">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-brand-accent"></i>
+    <span id="toast-msg">Settings synced!</span>
+  </div>
 
-  let currentDeviceIP = "192.168.100.158";
-  let chartInstance = null;
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+    }
 
-  // 默认节点数据
-  let timeNodes = [
-    { time: "08:00", r: 10, g: 10, w: 20, b: 40 },
-    { time: "12:00", r: 100, g: 100, w: 100, b: 100 },
-    { time: "18:00", r: 50, g: 40, w: 60, b: 80 },
-    { time: "22:00", r: 0, g: 0, w: 0, b: 5 }
-  ];
+    const DAYS = [
+      { bit: 1,  code: 'Sun' }, { bit: 2,  code: 'Mon' }, { bit: 4,  code: 'Tue' },
+      { bit: 8,  code: 'Wed' }, { bit: 16, code: 'Thu' }, { bit: 32, code: 'Fri' }, { bit: 64, code: 'Sat' }
+    ];
 
-  // 命令下发底层 (Image Beacon 无缝穿越 iOS 跨域限制)
-  function sendCommand(cmdStr) {
-    const img = new Image();
-    img.src = `http://${currentDeviceIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
-  }
-
-  // 读取灯具状态并回显 PWM
-  function connectAndReadStatus() {
-    const inputVal = document.getElementById('deviceIP').value.trim();
-    if (inputVal) currentDeviceIP = inputVal;
-    localStorage.setItem('aqua_device_ip', currentDeviceIP);
-    
-    document.getElementById('connectionStatus').innerText = `Syncing with ${currentDeviceIP}...`;
-
-    // 通过 JSONP/Script 注入异步拉取状态
-    const script = document.createElement('script');
-    script.src = `http://${currentDeviceIP}/cm?cmnd=Channels&_var=obkChannels&_t=${Date.now()}`;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      if (window.obkChannels) {
-        document.getElementById('connectionStatus').innerText = `Connected & Synced: ${currentDeviceIP}`;
+    let schedules = [
+      {
+        id: 'sch-1', name: 'Weekday Schedule', daysMask: 62,
+        nodes: [
+          { time: '07:30', r: 0, g: 0, w: 0, b: 5 },
+          { time: '10:00', r: 50, g: 40, w: 60, b: 40 },
+          { time: '14:00', r: 100, g: 90, w: 100, b: 80 },
+          { time: '18:00', r: 80, g: 40, w: 30, b: 20 },
+          { time: '21:00', r: 0, g: 0, w: 0, b: 15 },
+          { time: '22:30', r: 0, g: 0, w: 0, b: 0 }
+        ]
       }
-      document.body.removeChild(script);
-    };
-    script.onerror = () => {
-      document.getElementById('connectionStatus').innerText = `Connected to: ${currentDeviceIP} (Command Ready)`;
-    };
-  }
+    ];
 
-  // 滑块实时调光绑定
-  function bindSliderRealtime() {
-    document.querySelectorAll('.pwm-slider').forEach(slider => {
-      let isPending = false;
-      slider.addEventListener('input', (e) => {
-        const ch = e.target.dataset.channel;
-        const val = e.target.value;
-        document.getElementById(`val-ch${ch}`).innerText = `${val}%`;
+    let activeScheduleId = 'sch-1';
+    let selectedNodeIndex = 0;
+    let targetIP = "192.168.100.158";
+    let chartInstance = null;
 
-        if (!isPending) {
-          isPending = true;
-          requestAnimationFrame(() => {
-            sendCommand(`Channel${ch} ${val}`);
-            setTimeout(() => { isPending = false; }, 40);
-          });
+    // 核心发送指令函数 (Image Beacon 突破跨域拦截)
+    function sendCommand(cmd) {
+      const img = new Image();
+      img.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmd)}&_t=${Date.now()}`;
+    }
+
+    window.onload = function() {
+      initIP();
+      initChart();
+      renderScheduleTabs();
+      renderDaySelector();
+      renderNodesList();
+      loadActiveNodeToSliders();
+      updatePayloadPreview();
+    };
+
+    function initIP() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ipParam = urlParams.get('ip');
+      const savedIP = localStorage.getItem('aqua_device_ip');
+
+      if (ipParam) targetIP = ipParam;
+      else if (savedIP) targetIP = savedIP;
+
+      document.getElementById('target-ip').value = targetIP;
+      document.getElementById('header-ip-label').innerText = `Target: ${targetIP}`;
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('spectrumChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label: 'Red', data: [], borderColor: '#ff4b4b', tension: 0.35, borderWidth: 2 },
+            { label: 'Green', data: [], borderColor: '#2ecc71', tension: 0.35, borderWidth: 2 },
+            { label: 'White', data: [], borderColor: '#f8fafc', tension: 0.35, borderWidth: 2 },
+            { label: 'Blue', data: [], borderColor: '#3b82f6', tension: 0.35, borderWidth: 2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { min: 0, max: 100, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
         }
       });
-    });
-  }
-
-  // 渲染节点表格
-  function renderNodesTable() {
-    const tbody = document.getElementById('nodesTableBody');
-    tbody.innerHTML = '';
-    
-    // 按时间升序排序
-    timeNodes.sort((a, b) => a.time.localeCompare(b.time));
-
-    timeNodes.forEach((node, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="time" value="${node.time}" onchange="updateNodeData(${index}, 'time', this.value)"></td>
-        <td><input type="number" value="${node.r}" min="0" max="100" onchange="updateNodeData(${index}, 'r', this.value)"></td>
-        <td><input type="number" value="${node.g}" min="0" max="100" onchange="updateNodeData(${index}, 'g', this.value)"></td>
-        <td><input type="number" value="${node.w}" min="0" max="100" onchange="updateNodeData(${index}, 'w', this.value)"></td>
-        <td><input type="number" value="${node.b}" min="0" max="100" onchange="updateNodeData(${index}, 'b', this.value)"></td>
-        <td><button class="btn btn-danger btn-sm" onclick="removeTimeNode(${index})">Delete</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    updateChart();
-    localStorage.setItem('aqua_nodes', JSON.stringify(timeNodes));
-  }
-
-  function updateNodeData(index, key, value) {
-    if (key === 'time') timeNodes[index].time = value;
-    else timeNodes[index][key] = Math.min(100, Math.max(0, parseInt(value) || 0));
-    renderNodesTable();
-  }
-
-  function addTimeNode() {
-    timeNodes.push({ time: "15:00", r: 50, g: 50, w: 50, b: 50 });
-    renderNodesTable();
-  }
-
-  function removeTimeNode(index) {
-    if (timeNodes.length <= 2) {
-      alert("A minimum of 2 time nodes is required for a 24H curve.");
-      return;
-    }
-    timeNodes.splice(index, 1);
-    renderNodesTable();
-  }
-
-  // 更新 Chart.js 图表
-  function updateChart() {
-    if (!chartInstance) return;
-    chartInstance.data.labels = timeNodes.map(n => n.time);
-    chartInstance.data.datasets[0].data = timeNodes.map(n => n.r);
-    chartInstance.data.datasets[1].data = timeNodes.map(n => n.g);
-    chartInstance.data.datasets[2].data = timeNodes.map(n => n.w);
-    chartInstance.data.datasets[3].data = timeNodes.map(n => n.b);
-    chartInstance.update();
-  }
-
-  // 计算星期掩码并下发
-  function syncScheduleToDevice() {
-    let dayMask = 0;
-    document.querySelectorAll('.day-checkbox:checked').forEach(cb => {
-      dayMask |= parseInt(cb.value);
-    });
-
-    let cmds = ["ClearClockEvents"];
-    timeNodes.forEach(n => {
-      const t = n.time + ":00";
-      cmds.push(`addClockEvent ${t} 0x${dayMask.toString(16)} backlog Channel1 ${n.r}; Channel2 ${n.g}; Channel3 ${n.w}; Channel4 ${n.b}`);
-    });
-
-    sendCommand(cmds.join(';'));
-    alert(`Successfully synced ${timeNodes.length} time nodes (Days Mask: 0x${dayMask.toString(16)}) to light!`);
-  }
-
-  window.onload = () => {
-    const savedIP = localStorage.getItem('aqua_device_ip');
-    if (savedIP) currentDeviceIP = savedIP;
-    document.getElementById('deviceIP').value = currentDeviceIP;
-
-    const savedNodes = localStorage.getItem('aqua_nodes');
-    if (savedNodes) {
-      try { timeNodes = JSON.parse(savedNodes); } catch(e){}
+      refreshChartData();
     }
 
-    bindSliderRealtime();
+    function refreshChartData() {
+      if (!chartInstance) return;
+      const sch = getActiveSchedule();
+      sch.nodes.sort((a, b) => a.time.localeCompare(b.time));
 
-    const ctx = document.getElementById('lightChart').getContext('2d');
-    chartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [
-          { label: 'Red', data: [], borderColor: 'red', fill: false },
-          { label: 'Green', data: [], borderColor: 'green', fill: false },
-          { label: 'White', data: [], borderColor: 'white', fill: false },
-          { label: 'Blue', data: [], borderColor: 'dodgerblue', fill: false }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
+      chartInstance.data.labels = sch.nodes.map(n => n.time);
+      chartInstance.data.datasets[0].data = sch.nodes.map(n => n.r);
+      chartInstance.data.datasets[1].data = sch.nodes.map(n => n.g);
+      chartInstance.data.datasets[2].data = sch.nodes.map(n => n.w);
+      chartInstance.data.datasets[3].data = sch.nodes.map(n => n.b);
+      chartInstance.update();
+    }
 
-    renderNodesTable();
-    connectAndReadStatus();
-  };
-</script>
-</body>
-</html>
+    function getActiveSchedule() { return schedules.find(s => s.id === activeScheduleId) || schedules[0]; }
+
+    function renderScheduleTabs() {
+      const container = document.getElementById('schedule-tabs-container');
+      container.innerHTML = schedules.map(s => `
+        <button onclick="switchScheduleTab('${s.id}')" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap ${s.id === activeScheduleId ? 'bg-brand-accent text-slate-950' : 'bg-slate-800/80 text-gray-300'}">
+          ${s.name}
+        </button>
+      `).join('');
+    }
+
+    function switchScheduleTab(id) {
+      activeScheduleId = id;
+      selectedNodeIndex = 0;
+      renderScheduleTabs(); renderDaySelector(); renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+    }
+
+    function renderDaySelector() {
+      const container = document.getElementById('day-selector-grid');
+      const sch = getActiveSchedule();
+      document.getElementById('day-mask-badge').innerText = `Days Mask: ${sch.daysMask}`;
+      container.innerHTML = DAYS.map(d => `
+        <button onclick="toggleDayBit(${d.bit})" class="py-2 rounded-lg text-center font-bold text-xs border ${(sch.daysMask & d.bit) !== 0 ? 'bg-brand-accent/20 border-brand-accent text-brand-accent' : 'bg-slate-800/40 border-slate-700/60 text-gray-500'}">
+          ${d.code}
+        </button>
+      `).join('');
+    }
+
+    function toggleDayBit(bit) { getActiveSchedule().daysMask ^= bit; renderDaySelector(); updatePayloadPreview(); }
+
+    function renderNodesList() {
+      const container = document.getElementById('nodes-chip-container');
+      const sch = getActiveSchedule();
+      document.getElementById('node-count-label').innerText = `(${sch.nodes.length} Nodes)`;
+      container.innerHTML = sch.nodes.map((node, index) => `
+        <button onclick="selectNode(${index})" class="px-3 py-1.5 rounded-xl font-mono text-xs border ${index === selectedNodeIndex ? 'bg-brand-accent/20 border-brand-accent text-brand-accent' : 'bg-slate-900 border-slate-800 text-gray-400'}">
+          ${node.time}
+        </button>
+      `).join('');
+    }
+
+    function selectNode(index) { selectedNodeIndex = index; renderNodesList(); loadActiveNodeToSliders(); }
+
+    function loadActiveNodeToSliders() {
+      const sch = getActiveSchedule();
+      if (!sch.nodes[selectedNodeIndex]) selectedNodeIndex = 0;
+      const node = sch.nodes[selectedNodeIndex];
+      document.getElementById('node-time-input').value = node.time;
+      const map = { r: 1, g: 2, w: 3, b: 4 };
+      ['r', 'g', 'w', 'b'].forEach(ch => {
+        document.getElementById(`slider-${ch}`).value = node[ch];
+        document.getElementById(`val-${ch}`).innerText = `${node[ch]}%`;
+      });
+    }
+
+    // 滑块 60fps 实时防抖控灯
+    let isPending = false;
+    function updateSliderValue(ch, val) {
+      const sch = getActiveSchedule();
+      const value = parseInt(val);
+      sch.nodes[selectedNodeIndex][ch] = value;
+      document.getElementById(`val-${ch}`).innerText = `${value}%`;
+
+      const chMap = { r: 1, g: 2, w: 3, b: 4 };
+      if (!isPending) {
+        isPending = true;
+        requestAnimationFrame(() => {
+          sendCommand(`Channel${chMap[ch]} ${value}`);
+          setTimeout(() => { isPending = false; }, 40);
+        });
+      }
+
+      refreshChartData();
+      updatePayloadPreview();
+    }
+
+    function updateNodeTime(newTime) {
+      if (!newTime) return;
+      const sch = getActiveSchedule();
+      sch.nodes[selectedNodeIndex].time = newTime;
+      sch.nodes.sort((a, b) => a.time.localeCompare(b.time));
+      selectedNodeIndex = sch.nodes.findIndex(n => n.time === newTime);
+      renderNodesList(); refreshChartData(); updatePayloadPreview();
+    }
+
+    function addNewNode() { document.getElementById('add-node-modal').classList.remove('hidden'); document.getElementById('add-node-modal').classList.add('flex'); }
+    function closeAddNodeModal() { document.getElementById('add-node-modal').classList.add('hidden'); document.getElementById('add-node-modal').classList.remove('flex'); }
+
+    function confirmAddNode() {
+      const sch = getActiveSchedule();
+      const newTime = document.getElementById('new-node-time-input').value;
+      if (!newTime) return;
+      sch.nodes.push({ time: newTime, r: 50, g: 50, w: 50, b: 50 });
+      sch.nodes.sort((a, b) => a.time.localeCompare(b.time));
+      selectedNodeIndex = sch.nodes.findIndex(n => n.time === newTime);
+      closeAddNodeModal(); renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+    }
+
+    function deleteCurrentNode() {
+      const sch = getActiveSchedule();
+      if (sch.nodes.length <= 2) return alert("At least 2 nodes required.");
+      sch.nodes.splice(selectedNodeIndex, 1);
+      selectedNodeIndex = Math.max(0, selectedNodeIndex - 1);
+      renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+    }
+
+    function
