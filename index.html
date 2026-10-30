@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRO AQUA LIGHT</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0088cc">
+  <!-- 引入 Chart.js 用于绘制 24 小时光谱曲线 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; --accent-color: #0088cc; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .device-select { width: 100%; padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444; font-size: 16px; margin-bottom: 12px; }
+    .slider-group { margin-bottom: 16px; }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+    input[type=range] { width: 100%; height: 8px; border-radius: 4px; background: #333; outline: none; -webkit-appearance: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
+    .btn { width: 100%; padding: 12px; background: var(--accent-color); border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+    .btn:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>🐠 PRO AQUA LIGHT</h2>
+  </div>
+
+  <!-- 多灯管理设备切换器 -->
+  <div class="card">
+    <label for="deviceSelect" style="font-size: 12px; color: #aaa; display: block; margin-bottom: 4px;">ACTIVE DEVICE</label>
+    <select id="deviceSelect" class="device-select" onchange="switchDevice(this.value)">
+      <!-- 自动通过 JS 加载 -->
+    </select>
+  </div>
+
+  <!-- 4 路独立 PWM 实时调光滑块 -->
+  <div class="card">
+    <h3>Manual Dimming (4-CH)</h3>
+    
+    <div class="slider-group">
+      <div class="slider-header"><span>Ch1 - Red (R)</span><span id="val-ch1">0%</span></div>
+      <input type="range" class="pwm-slider" data-channel="1" min="0" max="100" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header"><span>Ch2 - Green (G)</span><span id="val-ch2">0%</span></div>
+      <input type="range" class="pwm-slider" data-channel="2" min="0" max="100" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header"><span>Ch3 - White (W)</span><span id="val-ch3">0%</span></div>
+      <input type="range" class="pwm-slider" data-channel="3" min="0" max="100" value="0">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-header"><span>Ch4 - Blue (B)</span><span id="val-ch4">0%</span></div>
+      <input type="range" class="pwm-slider" data-channel="4" min="0" max="100" value="0">
+    </div>
+  </div>
+
+  <!-- 24 小时日光曲线预览与同步 -->
+  <div class="card">
+    <h3>24H Light Curve Profile</h3>
+    <canvas id="lightChart" style="width: 100%; height: 200px;"></canvas>
+    <button class="btn" style="margin-top: 16px;" onclick="syncScheduleToDevice()">Sync 24H Profile to Device</button>
+  </div>
+
+  <script>
+    // 1. Service Worker 注册 (实现 PWA 离线缓存)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW Registered:', reg.scope))
+          .catch(err => console.log('SW Register Failed:', err));
+      });
+    }
+
+    // 2. 多设备列表与当前目标 IP 管理
+    let currentDeviceIP = window.location.hostname || "192.168.1.100";
+    let deviceList = JSON.parse(localStorage.getItem('aqua_devices')) || [
+      { name: "Main Tank (192.168.1.100)", ip: currentDeviceIP }
+    ];
+
+    function initDeviceList() {
+      const select = document.getElementById('deviceSelect');
+      select.innerHTML = deviceList.map(d => `<option value="${d.ip}" ${d.ip === currentDeviceIP ? 'selected' : ''}>${d.name}</option>`).join('');
+    }
+
+    function switchDevice(ip) {
+      currentDeviceIP = ip;
+      console.log("Switched target device to:", currentDeviceIP);
+    }
+
+    // 3. 毫秒级 60fps 防抖实时调光 (解决手感与拖动卡顿)
+    function bindSliderRealtime() {
+      document.querySelectorAll('.pwm-slider').forEach(slider => {
+        let isPending = false;
+        slider.addEventListener('input', (e) => {
+          const channel = e.target.dataset.channel;
+          const value = e.target.value;
+          
+          document.getElementById(`val-ch${channel}`).innerText = `${value}%`;
+
+          if (!isPending) {
+            isPending = true;
+            requestAnimationFrame(() => {
+              fetch(`http://${currentDeviceIP}/cm?cmnd=Channel${channel}%20${value}`)
+                .finally(() => { isPending = false; });
+            });
+          }
+        });
+      });
+    }
+
+    // 4. 下发 24 小时 addClockEvent 定时任务至芯片
+    function syncScheduleToDevice() {
+      // 示例 24小时 4节点光谱数据 (可拓展为由 Chart.js 拖拽生成)
+      const scheduleArray = [
+        { time: "08:00:00", ch1: 10, ch2: 10, ch3: 20, ch4: 40 },
+        { time: "12:00:00", ch1: 100, ch2: 100, ch3: 100, ch4: 100 },
+        { time: "18:00:00", ch1: 50, ch2: 40, ch3: 60, ch4: 80 },
+        { time: "22:00:00", ch1: 0, ch2: 0, ch3: 0, ch4: 5 }
+      ];
+
+      let commands = ["ClearClockEvents"];
+      scheduleArray.forEach(pt => {
+        const cmd = `addClockEvent ${pt.time} 7 backlog Channel1 ${pt.ch1}; Channel2 ${pt.ch2}; Channel3 ${pt.ch3}; Channel4 ${pt.ch4}`;
+        commands.push(cmd);
+      });
+
+      const fullCmd = commands.join(';');
+      fetch(`http://${currentDeviceIP}/cm?cmnd=${encodeURIComponent(fullCmd)}`)
+        .then(res => alert("24-Hour Profile Synced Successfully!"));
+    }
+
+    // 初始化运行
+    window.onload = () => {
+      initDeviceList();
+      bindSliderRealtime();
+
+      // 初始化 Simple Chart.js 折线图
+      const ctx = document.getElementById('lightChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['08:00', '12:00', '18:00', '22:00'],
+          datasets: [
+            { label: 'Red', data: [10, 100, 50, 0], borderColor: 'red', fill: false },
+            { label: 'Green', data: [10, 100, 40, 0], borderColor: 'green', fill: false },
+            { label: 'White', data: [20, 100, 60, 0], borderColor: 'white', fill: false },
+            { label: 'Blue', data: [40, 100, 80, 5], borderColor: 'dodgerblue', fill: false }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    };
+  </script>
+</body>
+</html>
