@@ -1,18 +1,15 @@
 {
-  "name": "PRO AQUA LIGHT Controller",
-  "short_name": "PRO AQUA",
-  "description": "Professional 4-Channel Aquarium LED Controller",
-  "start_url": "/index.html",
+  "name": "PRO AQUA LIGHT",
+  "short_name": "ProAqua",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#0088cc",
-  "orientation": "portrait",
+  "background_color": "#0b1017",
+  "theme_color": "#0b1017",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://placehold.co/192x192/0b1017/00e5ff?text=AQUA+PRO",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
