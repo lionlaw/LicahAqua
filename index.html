@@ -3,21 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>PRO AQUA LIGHT - Commercial Aquarium Lighting Controller</title>
+  <title>PRO AQUA LIGHT - Commercial Aquarium Controller</title>
   
-  <!-- PWA & Mobile Viewport Meta Tags -->
   <meta name="theme-color" content="#0b1017">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ProAquaLight">
-  <link rel="apple-touch-icon" href="https://placehold.co/192x192/0b1017/00e5ff?text=AQUA+PRO">
   <link rel="manifest" href="./manifest.json">
 
   <!-- Tailwind CSS & FontAwesome Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Chart.js for Visual Curve rendering -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
@@ -31,11 +27,6 @@
               card: '#141c27',
               border: '#233044',
               accent: '#00e5ff',
-              accentGlow: 'rgba(0,229,255,0.15)',
-              red: '#ff4b4b',
-              green: '#2ecc71',
-              white: '#f1f5f9',
-              blue: '#3b82f6'
             }
           }
         }
@@ -47,14 +38,12 @@
     body {
       background-color: #0b1017;
       color: #e2e8f0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
 
     .glass-card {
       background: rgba(20, 28, 39, 0.85);
-      backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
@@ -85,46 +74,43 @@
 </head>
 <body class="min-h-screen flex flex-col pb-10">
 
-  <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-50 glass-card border-b border-brand-border px-4 py-3 flex items-center justify-between">
+  <!-- 隐藏的 Iframe 用于无感发送 HTTP 指令，绕过 HTTPS 混合内容限制 -->
+  <iframe name="cmd_target" id="cmd_target" style="display:none;"></iframe>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 glass-card border-b border-brand-border px-4 py-3 flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
         <i class="fa-solid fa-fish-fins text-lg"></i>
       </div>
       <div>
         <h1 class="text-base font-bold tracking-wider text-white flex items-center gap-2">
           PRO AQUA LIGHT
-          <span class="text-[10px] bg-brand-accent/10 text-brand-accent border border-brand-accent/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.4</span>
+          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.4</span>
         </h1>
         <p class="text-xs text-gray-400" id="header-ip-label">Target: 192.168.100.158</p>
       </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <button onclick="openSettingsModal()" class="w-9 h-9 rounded-lg bg-brand-border/50 flex items-center justify-center text-gray-300 hover:text-white transition">
-        <i class="fa-solid fa-gear"></i>
-      </button>
-    </div>
+    <button onclick="toggleModal('settings-modal', true)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-gray-300 hover:text-white">
+      <i class="fa-solid fa-gear"></i>
+    </button>
   </header>
 
   <main class="max-w-4xl mx-auto w-full px-4 pt-4 space-y-4 flex-grow">
 
-    <!-- Quick Override Preset Buttons -->
+    <!-- Quick Mode Buttons -->
     <section class="glass-card rounded-2xl p-3 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-      <button onclick="activateOverride('normal')" id="override-normal" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-brand-accent/20 border border-brand-accent/50 text-brand-accent text-xs font-semibold flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-clock"></i>
-        Auto Schedule
+      <button onclick="activateOverride('normal')" id="override-normal" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 text-xs font-semibold flex items-center justify-center gap-2">
+        <i class="fa-solid fa-clock"></i> Auto Schedule
       </button>
-      <button onclick="activateOverride('viewing')" id="override-viewing" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-eye text-yellow-400"></i>
-        30M View Boost
+      <button onclick="activateOverride('viewing')" id="override-viewing" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-gray-300 text-xs font-medium flex items-center justify-center gap-2">
+        <i class="fa-solid fa-eye text-yellow-400"></i> View Boost
       </button>
-      <button onclick="activateOverride('feed')" id="override-feed" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-bowl-food text-emerald-400"></i>
-        Feed Mode
+      <button onclick="activateOverride('feed')" id="override-feed" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-gray-300 text-xs font-medium flex items-center justify-center gap-2">
+        <i class="fa-solid fa-bowl-food text-emerald-400"></i> Feed Mode
       </button>
-      <button onclick="activateOverride('night')" id="override-night" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-moon text-blue-400"></i>
-        Moonlight 5%
+      <button onclick="activateOverride('night')" id="override-night" class="flex-1 min-w-[110px] py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-gray-300 text-xs font-medium flex items-center justify-center gap-2">
+        <i class="fa-solid fa-moon text-blue-400"></i> Moonlight
       </button>
     </section>
 
@@ -132,44 +118,27 @@
     <section class="space-y-2">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Schedule Profiles</span>
-        <button onclick="addNewScheduleGroup()" class="text-xs text-brand-accent hover:underline flex items-center gap-1">
+        <button onclick="toggleModal('add-profile-modal', true)" class="text-xs text-cyan-400 hover:underline flex items-center gap-1">
           <i class="fa-solid fa-plus"></i> Add Profile
         </button>
       </div>
-      
       <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="schedule-tabs-container"></div>
     </section>
 
-    <!-- Day-Mask Checkbox Selector -->
+    <!-- Day Selector -->
     <section class="glass-card rounded-2xl p-3 space-y-2">
       <div class="flex items-center justify-between text-xs text-gray-300">
-        <span class="font-medium flex items-center gap-1.5">
-          <i class="fa-solid fa-calendar-days text-brand-accent"></i>
-          Active Days Assignment
-        </span>
-        <span id="day-mask-badge" class="font-mono text-[11px] bg-slate-800 text-brand-accent px-2 py-0.5 rounded border border-brand-accent/20">
-          Days Mask: 62
-        </span>
+        <span class="font-medium flex items-center gap-1.5"><i class="fa-solid fa-calendar-days text-cyan-400"></i> Active Days Assignment</span>
+        <span id="day-mask-badge" class="font-mono text-[11px] bg-slate-800 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">Days Mask: 62</span>
       </div>
-      
       <div class="grid grid-cols-7 gap-1.5" id="day-selector-grid"></div>
     </section>
 
-    <!-- 24-Hour Spectrum Chart -->
+    <!-- Spectrum Chart -->
     <section class="glass-card rounded-2xl p-4 space-y-3">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-chart-line text-brand-accent"></i>
-          24-Hour Lighting Curve Spectrum
-        </h2>
-        <div class="flex items-center space-x-2 text-[11px]">
-          <span class="inline-flex items-center gap-1 text-red-400"><span class="w-2 h-2 rounded-full bg-red-500"></span>R</span>
-          <span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>G</span>
-          <span class="inline-flex items-center gap-1 text-gray-200"><span class="w-2 h-2 rounded-full bg-slate-200"></span>W</span>
-          <span class="inline-flex items-center gap-1 text-blue-400"><span class="w-2 h-2 rounded-full bg-blue-500"></span>B</span>
-        </div>
+        <h2 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-cyan-400"></i> 24-Hour Lighting Curve Spectrum</h2>
       </div>
-
       <div class="relative w-full h-56">
         <canvas id="spectrumChart"></canvas>
       </div>
@@ -177,177 +146,123 @@
 
     <!-- Node Editor Section -->
     <section class="glass-card rounded-2xl p-4 space-y-4">
-      <div class="flex items-center justify-between border-b border-brand-border/60 pb-3">
+      <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
         <div class="flex items-center space-x-2">
           <h2 class="text-sm font-bold text-white">Time Node Timeline</h2>
           <span class="text-xs text-gray-400" id="node-count-label">(0 Nodes)</span>
         </div>
-        <button onclick="addNewNode()" class="px-3 py-1.5 rounded-lg bg-brand-accent/20 hover:bg-brand-accent/30 text-brand-accent text-xs font-semibold border border-brand-accent/30 flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-plus"></i>
-          Add Time Node
+        <button onclick="toggleModal('add-node-modal', true)" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-xs font-semibold border border-cyan-500/30 flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> Add Time Node
         </button>
       </div>
 
       <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="nodes-chip-container"></div>
 
-      <!-- Active Node Spectrum Sliders Card -->
+      <!-- PWM Sliders -->
       <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <span class="text-xs text-gray-400">Node Time:</span>
-            <input type="time" id="node-time-input" onchange="updateNodeTime(this.value)" class="bg-slate-800 border border-slate-700 text-white font-mono text-sm px-2.5 py-1 rounded-lg focus:outline-none focus:border-brand-accent">
+            <input type="time" id="node-time-input" onchange="updateNodeTime(this.value)" class="bg-slate-800 border border-slate-700 text-white font-mono text-sm px-2.5 py-1 rounded-lg">
           </div>
-          <button onclick="deleteCurrentNode()" id="delete-node-btn" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition">
+          <button onclick="deleteCurrentNode()" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded bg-red-500/10">
             <i class="fa-solid fa-trash-can"></i> Delete Node
           </button>
         </div>
 
-        <!-- 4 Channel PWM Sliders -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-red-400 font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-circle text-[8px]"></i> Red Channel (PWM 1)
-              </span>
-              <span id="val-r" class="font-mono text-white font-bold">0%</span>
-            </div>
+            <div class="flex justify-between text-xs"><span class="text-red-400">Red Channel</span><span id="val-r" class="font-mono text-white font-bold">0%</span></div>
             <input type="range" id="slider-r" min="0" max="100" value="0" oninput="updateSliderValue('r', this.value)" class="w-full slider-r">
           </div>
-
           <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-emerald-400 font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-circle text-[8px]"></i> Green Channel (PWM 2)
-              </span>
-              <span id="val-g" class="font-mono text-white font-bold">0%</span>
-            </div>
+            <div class="flex justify-between text-xs"><span class="text-emerald-400">Green Channel</span><span id="val-g" class="font-mono text-white font-bold">0%</span></div>
             <input type="range" id="slider-g" min="0" max="100" value="0" oninput="updateSliderValue('g', this.value)" class="w-full slider-g">
           </div>
-
           <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-200 font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-circle text-[8px]"></i> White Channel (PWM 3)
-              </span>
-              <span id="val-w" class="font-mono text-white font-bold">0%</span>
-            </div>
+            <div class="flex justify-between text-xs"><span class="text-slate-200">White Channel</span><span id="val-w" class="font-mono text-white font-bold">0%</span></div>
             <input type="range" id="slider-w" min="0" max="100" value="0" oninput="updateSliderValue('w', this.value)" class="w-full slider-w">
           </div>
-
           <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-blue-400 font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-circle text-[8px]"></i> Blue Channel (PWM 4)
-              </span>
-              <span id="val-b" class="font-mono text-white font-bold">0%</span>
-            </div>
+            <div class="flex justify-between text-xs"><span class="text-blue-400">Blue Channel</span><span id="val-b" class="font-mono text-white font-bold">0%</span></div>
             <input type="range" id="slider-b" min="0" max="100" value="0" oninput="updateSliderValue('b', this.value)" class="w-full slider-b">
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CLI Payload Engine -->
+    <!-- Command Payload Generator -->
     <section class="glass-card rounded-2xl p-4 space-y-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-terminal text-brand-accent"></i>
-          <h2 class="text-sm font-bold text-white">OpenBeken Hardware Payload Engine</h2>
-        </div>
-        <span class="text-[11px] text-gray-400">Target: BL602 Local Execution</span>
+        <h2 class="text-sm font-bold text-white"><i class="fa-solid fa-terminal text-cyan-400"></i> OpenBeken Command Payload</h2>
+        <span class="text-[11px] text-gray-400">Target: BL602</span>
       </div>
 
       <div class="bg-black/80 rounded-xl p-3 border border-slate-800 font-mono text-xs text-emerald-400 space-y-2 overflow-x-auto">
-        <div class="flex items-center justify-between text-[10px] text-gray-500 border-b border-gray-800 pb-1">
-          <span>COMPILED CLI COMMANDS (`addClockEvent` Sequence)</span>
-          <button onclick="copyPayloadToClipboard()" class="hover:text-brand-accent transition flex items-center gap-1">
-            <i class="fa-regular fa-copy"></i> Copy Payload
-          </button>
-        </div>
-        <pre id="payload-preview" class="whitespace-pre-wrap leading-relaxed">Generating hardware payload...</pre>
+        <pre id="payload-preview" class="whitespace-pre-wrap leading-relaxed">Generating...</pre>
       </div>
 
-      <div class="pt-1 flex flex-col sm:flex-row items-center gap-3">
-        <button onclick="syncToHardware()" class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition active:scale-[0.98]">
-          <i class="fa-solid fa-microchip"></i>
-          Sync to Light Hardware (BL602)
-        </button>
-      </div>
+      <button onclick="syncToHardware()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2">
+        <i class="fa-solid fa-microchip"></i> Sync Schedule to Light Hardware
+      </button>
     </section>
 
   </main>
 
-  <!-- Settings Modal -->
-  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+  <!-- Modals (使用纯 Inline Style 确保绝对覆盖显示) -->
+  <div id="settings-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8);" class="items-center justify-center p-4">
     <div class="glass-card max-w-md w-full rounded-2xl p-5 space-y-4 border border-slate-700">
       <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-brand-accent"></i>
-          Hardware Settings
-        </h3>
-        <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <h3 class="text-base font-bold text-white">Hardware Settings</h3>
+        <button onclick="toggleModal('settings-modal', false)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-gray-400 mb-1">Controller Local IP Address</label>
-          <input type="text" id="target-ip" value="192.168.100.158" class="w-full bg-slate-800 border border-slate-700 text-white font-mono px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+          <label class="block text-gray-400 mb-1">Target Controller IP Address</label>
+          <input type="text" id="target-ip" value="192.168.100.158" class="w-full bg-slate-800 border border-slate-700 text-white font-mono px-3 py-2 rounded-lg">
         </div>
       </div>
-
-      <div class="pt-2">
-        <button onclick="saveSettings()" class="w-full py-2.5 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs hover:bg-cyan-300 transition">
-          Save Settings
-        </button>
-      </div>
+      <button onclick="saveSettings()" class="w-full py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs">Save Settings</button>
     </div>
   </div>
 
-  <!-- Modals for Add Profile / Add Node -->
-  <div id="add-profile-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div id="add-profile-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8);" class="items-center justify-center p-4">
     <div class="glass-card max-w-sm w-full rounded-2xl p-5 space-y-4 border border-slate-700">
       <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-folder-plus text-brand-accent"></i>
-          Create Schedule Profile
-        </h3>
-        <button onclick="closeAddProfileModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="text-sm font-bold text-white">Create Schedule Profile</h3>
+        <button onclick="toggleModal('add-profile-modal', false)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div>
         <label class="block text-xs text-gray-400 mb-1.5">Profile Name</label>
-        <input type="text" id="new-profile-name-input" placeholder="e.g., Holiday Mode" class="w-full bg-slate-800 border border-slate-700 text-white font-sans text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+        <input type="text" id="new-profile-name-input" placeholder="e.g., Holiday Mode" class="w-full bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg">
       </div>
-      <div class="flex items-center gap-2 pt-1">
-        <button onclick="closeAddProfileModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 font-medium text-xs">Cancel</button>
-        <button onclick="confirmCreateProfile()" class="flex-1 py-2 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs">Create</button>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleModal('add-profile-modal', false)" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 text-xs">Cancel</button>
+        <button onclick="confirmCreateProfile()" class="flex-1 py-2 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs">Create</button>
       </div>
     </div>
   </div>
 
-  <div id="add-node-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div id="add-node-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8);" class="items-center justify-center p-4">
     <div class="glass-card max-w-sm w-full rounded-2xl p-5 space-y-4 border border-slate-700">
       <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-regular fa-clock text-brand-accent"></i> Add Time Node
-        </h3>
-        <button onclick="closeAddNodeModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="text-sm font-bold text-white">Add Time Node</h3>
+        <button onclick="toggleModal('add-node-modal', false)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div>
         <label class="block text-xs text-gray-400 mb-1.5">Select Time (24h Format)</label>
-        <input type="time" id="new-node-time-input" value="12:00" class="w-full bg-slate-800 border border-slate-700 text-white font-mono text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-brand-accent">
+        <input type="time" id="new-node-time-input" value="12:00" class="w-full bg-slate-800 border border-slate-700 text-white font-mono text-sm px-3 py-2 rounded-lg">
       </div>
-      <div class="flex items-center gap-2 pt-1">
-        <button onclick="closeAddNodeModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 font-medium text-xs">Cancel</button>
-        <button onclick="confirmAddNode()" class="flex-1 py-2 rounded-xl bg-brand-accent text-slate-950 font-bold text-xs">Add Node</button>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleModal('add-node-modal', false)" class="flex-1 py-2 rounded-xl bg-slate-800 text-gray-300 text-xs">Cancel</button>
+        <button onclick="confirmAddNode()" class="flex-1 py-2 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs">Add Node</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-brand-accent text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 opacity-0 transition-all pointer-events-none">
-    <i id="toast-icon" class="fa-solid fa-circle-check text-brand-accent"></i>
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-cyan-400 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 opacity-0 transition-all pointer-events-none">
+    <i class="fa-solid fa-circle-check text-cyan-400"></i>
     <span id="toast-msg">Settings synced!</span>
   </div>
 
@@ -357,8 +272,8 @@
     }
 
     const DAYS = [
-      { bit: 1,  code: 'Sun' }, { bit: 2,  code: 'Mon' }, { bit: 4,  code: 'Tue' },
-      { bit: 8,  code: 'Wed' }, { bit: 16, code: 'Thu' }, { bit: 32, code: 'Fri' }, { bit: 64, code: 'Sat' }
+      { bit: 1, code: 'Sun' }, { bit: 2, code: 'Mon' }, { bit: 4, code: 'Tue' },
+      { bit: 8, code: 'Wed' }, { bit: 16, code: 'Thu' }, { bit: 32, code: 'Fri' }, { bit: 64, code: 'Sat' }
     ];
 
     let schedules = [
@@ -380,10 +295,26 @@
     let targetIP = "192.168.100.158";
     let chartInstance = null;
 
-    // 核心发送指令函数 (Image Beacon 突破跨域拦截)
+    // 强效穿透跨域指令发送器
     function sendCommand(cmd) {
+      // 方法 1: Image Beacon
       const img = new Image();
       img.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmd)}&_t=${Date.now()}`;
+
+      // 方法 2: 动态 Form 提交 (彻底穿透混合内容拦截)
+      try {
+        let form = document.getElementById('cmd_form');
+        if (!form) {
+          form = document.createElement('form');
+          form.id = 'cmd_form';
+          form.method = 'GET';
+          form.target = 'cmd_target';
+          document.body.appendChild(form);
+        }
+        form.action = `http://${targetIP}/cm`;
+        form.innerHTML = `<input type="hidden" name="cmnd" value="${cmd}">`;
+        form.submit();
+      } catch(e) {}
     }
 
     window.onload = function() {
@@ -450,7 +381,7 @@
     function renderScheduleTabs() {
       const container = document.getElementById('schedule-tabs-container');
       container.innerHTML = schedules.map(s => `
-        <button onclick="switchScheduleTab('${s.id}')" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap ${s.id === activeScheduleId ? 'bg-brand-accent text-slate-950' : 'bg-slate-800/80 text-gray-300'}">
+        <button onclick="switchScheduleTab('${s.id}')" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap ${s.id === activeScheduleId ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-gray-300'}">
           ${s.name}
         </button>
       `).join('');
@@ -467,7 +398,7 @@
       const sch = getActiveSchedule();
       document.getElementById('day-mask-badge').innerText = `Days Mask: ${sch.daysMask}`;
       container.innerHTML = DAYS.map(d => `
-        <button onclick="toggleDayBit(${d.bit})" class="py-2 rounded-lg text-center font-bold text-xs border ${(sch.daysMask & d.bit) !== 0 ? 'bg-brand-accent/20 border-brand-accent text-brand-accent' : 'bg-slate-800/40 border-slate-700/60 text-gray-500'}">
+        <button onclick="toggleDayBit(${d.bit})" class="py-2 rounded-lg text-center font-bold text-xs border ${(sch.daysMask & d.bit) !== 0 ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400' : 'bg-slate-800 border-slate-700 text-gray-500'}">
           ${d.code}
         </button>
       `).join('');
@@ -480,7 +411,7 @@
       const sch = getActiveSchedule();
       document.getElementById('node-count-label').innerText = `(${sch.nodes.length} Nodes)`;
       container.innerHTML = sch.nodes.map((node, index) => `
-        <button onclick="selectNode(${index})" class="px-3 py-1.5 rounded-xl font-mono text-xs border ${index === selectedNodeIndex ? 'bg-brand-accent/20 border-brand-accent text-brand-accent' : 'bg-slate-900 border-slate-800 text-gray-400'}">
+        <button onclick="selectNode(${index})" class="px-3 py-1.5 rounded-xl font-mono text-xs border ${index === selectedNodeIndex ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400' : 'bg-slate-900 border-slate-800 text-gray-400'}">
           ${node.time}
         </button>
       `).join('');
@@ -493,14 +424,12 @@
       if (!sch.nodes[selectedNodeIndex]) selectedNodeIndex = 0;
       const node = sch.nodes[selectedNodeIndex];
       document.getElementById('node-time-input').value = node.time;
-      const map = { r: 1, g: 2, w: 3, b: 4 };
       ['r', 'g', 'w', 'b'].forEach(ch => {
         document.getElementById(`slider-${ch}`).value = node[ch];
         document.getElementById(`val-${ch}`).innerText = `${node[ch]}%`;
       });
     }
 
-    // 滑块 60fps 实时防抖控灯
     let isPending = false;
     function updateSliderValue(ch, val) {
       const sch = getActiveSchedule();
@@ -530,8 +459,13 @@
       renderNodesList(); refreshChartData(); updatePayloadPreview();
     }
 
-    function addNewNode() { document.getElementById('add-node-modal').classList.remove('hidden'); document.getElementById('add-node-modal').classList.add('flex'); }
-    function closeAddNodeModal() { document.getElementById('add-node-modal').classList.add('hidden'); document.getElementById('add-node-modal').classList.remove('flex'); }
+    // 显示与隐藏 Modal 的稳健实现
+    function toggleModal(modalId, show) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.style.display = show ? 'flex' : 'none';
+      }
+    }
 
     function confirmAddNode() {
       const sch = getActiveSchedule();
@@ -540,7 +474,22 @@
       sch.nodes.push({ time: newTime, r: 50, g: 50, w: 50, b: 50 });
       sch.nodes.sort((a, b) => a.time.localeCompare(b.time));
       selectedNodeIndex = sch.nodes.findIndex(n => n.time === newTime);
-      closeAddNodeModal(); renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+      toggleModal('add-node-modal', false);
+      renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+      showToast(`Node ${newTime} added`);
+    }
+
+    function confirmCreateProfile() {
+      const input = document.getElementById('new-profile-name-input');
+      const name = input.value.trim() || 'Custom Profile';
+      const newId = 'sch-' + Date.now();
+      schedules.push({
+        id: newId, name: name, daysMask: 127,
+        nodes: [{ time: '08:00', r: 0, g: 0, w: 0, b: 10 }, { time: '14:00', r: 100, g: 100, w: 100, b: 100 }, { time: '22:00', r: 0, g: 0, w: 0, b: 0 }]
+      });
+      toggleModal('add-profile-modal', false);
+      switchScheduleTab(newId);
+      showToast(`Created profile: ${name}`);
     }
 
     function deleteCurrentNode() {
@@ -549,6 +498,58 @@
       sch.nodes.splice(selectedNodeIndex, 1);
       selectedNodeIndex = Math.max(0, selectedNodeIndex - 1);
       renderNodesList(); loadActiveNodeToSliders(); refreshChartData(); updatePayloadPreview();
+      showToast("Node deleted");
     }
 
-    function
+    function generateOpenBekenPayload() {
+      let cmds = ["ClearClockEvents"];
+      schedules.forEach(sch => {
+        if (sch.daysMask === 0) return;
+        sch.nodes.forEach(node => {
+          cmds.push(`addClockEvent ${node.time}:00 0x${sch.daysMask.toString(16)} backlog Channel1 ${node.r}; Channel2 ${node.g}; Channel3 ${node.w}; Channel4 ${node.b}`);
+        });
+      });
+      return cmds.join('\n');
+    }
+
+    function updatePayloadPreview() { document.getElementById('payload-preview').innerText = generateOpenBekenPayload(); }
+
+    function syncToHardware() {
+      const cmds = generateOpenBekenPayload().split('\n').join(';');
+      sendCommand(cmds);
+      showToast("✅ Successfully synced 24-hour schedule to Light!");
+    }
+
+    function activateOverride(mode) {
+      if (mode === 'normal') {
+        syncToHardware();
+        showToast("Restored to 24-Hour Auto Schedule");
+      } else if (mode === 'viewing') {
+        sendCommand("backlog Channel1 100; Channel2 100; Channel3 100; Channel4 100");
+        showToast("Activated 30-Min High Boost Viewing Mode");
+      } else if (mode === 'feed') {
+        sendCommand("backlog Channel1 20; Channel2 20; Channel3 30; Channel4 10");
+        showToast("Activated Feeding Mode");
+      } else if (mode === 'night') {
+        sendCommand("backlog Channel1 0; Channel2 0; Channel3 0; Channel4 5");
+        showToast("Activated Moonlight Mode");
+      }
+    }
+
+    function saveSettings() {
+      targetIP = document.getElementById('target-ip').value.trim();
+      localStorage.setItem('aqua_device_ip', targetIP);
+      document.getElementById('header-ip-label').innerText = `Target: ${targetIP}`;
+      toggleModal('settings-modal', false);
+      showToast("Hardware settings saved!");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+    }
+  </script>
+</body>
+</html>
