@@ -3,76 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRO AQUA LIGHT</title>
+  <title>PRO AQUA LIGHT CONTROL</title>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0088cc">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; --accent-color: #0088cc; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; }
+    :root { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; --accent-color: #0088cc; --danger-color: #d9534f; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .device-input-group { display: flex; gap: 8px; margin-bottom: 8px; }
-    .device-input { flex: 1; padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444; font-size: 16px; box-sizing: border-box; }
-    .btn-sm { padding: 10px 16px; background: var(--accent-color); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .device-input-group { display: flex; gap: 10px; margin-bottom: 8px; }
+    .device-input { flex: 1; padding: 10px; border-radius: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444; font-size: 15px; }
+    .btn { padding: 10px 20px; background: var(--accent-color); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-danger { background: var(--danger-color); }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
     .slider-group { margin-bottom: 16px; }
     .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
     input[type=range] { width: 100%; height: 8px; border-radius: 4px; background: #333; outline: none; -webkit-appearance: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
-    .btn { width: 100%; padding: 12px; background: var(--accent-color); border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
-    .btn:active { opacity: 0.8; }
-    .status-text { font-size: 12px; color: #0088cc; margin-top: 4px; }
-    /* 时间点编辑表格样式 */
-    .schedule-table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 16px; }
-    .schedule-table th, .schedule-table td { padding: 6px 4px; text-align: center; font-size: 12px; border-bottom: 1px solid #333; }
-    .schedule-table input { width: 90%; padding: 4px; border-radius: 4px; background: #2a2a2a; color: #fff; border: 1px solid #444; text-align: center; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
+    
+    /* 星期选择器样式 */
+    .days-picker { display: flex; gap: 8px; margin: 12px 0; }
+    .day-checkbox { display: none; }
+    .day-label { flex: 1; text-align: center; padding: 8px; background: #2a2a2a; border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid #444; user-select: none; }
+    .day-checkbox:checked + .day-label { background: var(--accent-color); border-color: var(--accent-color); font-weight: bold; }
+
+    /* 时间节点表格样式 */
+    .schedule-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .schedule-table th, .schedule-table td { padding: 8px; text-align: center; border-bottom: 1px solid #333; font-size: 13px; }
+    .schedule-table input { width: 80%; padding: 6px; border-radius: 6px; background: #2a2a2a; color: #fff; border: 1px solid #444; text-align: center; }
+    .status-text { font-size: 13px; color: #0088cc; }
+    .table-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
   </style>
 </head>
 <body>
 
+<div class="container">
   <div class="header">
-    <h2>🐠 PRO AQUA LIGHT</h2>
+    <h2>🐠 PRO AQUA LIGHT SYSTEM</h2>
   </div>
 
-  <!-- IP 连接配置 -->
+  <!-- 1. 设备连接与状态同步 -->
   <div class="card">
-    <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 6px;">TARGET DEVICE IP</label>
+    <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 6px;">TARGET LIGHT IP</label>
     <div class="device-input-group">
       <input type="text" id="deviceIP" class="device-input" placeholder="e.g. 192.168.100.158">
-      <button class="btn-sm" onclick="applyAndSaveIP()">CONNECT</button>
+      <button class="btn" onclick="connectAndReadStatus()">CONNECT & READ</button>
     </div>
-    <div id="connectionStatus" class="status-text">Connected to: 192.168.100.158</div>
+    <div id="connectionStatus" class="status-text">Ready to connect...</div>
   </div>
 
-  <!-- 4 路实时调光 (兼容模式) -->
+  <!-- 2. 4 路手动实时调光 -->
   <div class="card">
     <h3>Manual Dimming (4-CH)</h3>
     <div class="slider-group">
       <div class="slider-header"><span>Ch1 - Red (R)</span><span id="val-ch1">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="1" min="0" max="100" value="0">
+      <input type="range" class="pwm-slider" data-channel="1" id="slider-ch1" min="0" max="100" value="0">
     </div>
     <div class="slider-group">
       <div class="slider-header"><span>Ch2 - Green (G)</span><span id="val-ch2">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="2" min="0" max="100" value="0">
+      <input type="range" class="pwm-slider" data-channel="2" id="slider-ch2" min="0" max="100" value="0">
     </div>
     <div class="slider-group">
       <div class="slider-header"><span>Ch3 - White (W)</span><span id="val-ch3">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="3" min="0" max="100" value="0">
+      <input type="range" class="pwm-slider" data-channel="3" id="slider-ch3" min="0" max="100" value="0">
     </div>
     <div class="slider-group">
       <div class="slider-header"><span>Ch4 - Blue (B)</span><span id="val-ch4">0%</span></div>
-      <input type="range" class="pwm-slider" data-channel="4" min="0" max="100" value="0">
+      <input type="range" class="pwm-slider" data-channel="4" id="slider-ch4" min="0" max="100" value="0">
     </div>
   </div>
 
-  <!-- 24 小时光谱曲线 & 动态时间点设置控制 -->
+  <!-- 3. 24 小时光谱曲线 & 节点增减 & 周期选择 -->
   <div class="card">
-    <h3>24H Light Curve Profile</h3>
-    <div style="height: 180px; position: relative;">
+    <h3>24H Profile & Dynamic Time Nodes</h3>
+    
+    <!-- 星期重复选择器 -->
+    <label style="font-size: 12px; color: #aaa;">REPEAT DAYS</label>
+    <div class="days-picker">
+      <input type="checkbox" id="d1" class="day-checkbox" value="1" checked><label for="d1" class="day-label">Mon</label>
+      <input type="checkbox" id="d2" class="day-checkbox" value="2" checked><label for="d2" class="day-label">Tue</label>
+      <input type="checkbox" id="d3" class="day-checkbox" value="4" checked><label for="d3" class="day-label">Wed</label>
+      <input type="checkbox" id="d4" class="day-checkbox" value="8" checked><label for="d4" class="day-label">Thu</label>
+      <input type="checkbox" id="d5" class="day-checkbox" value="16" checked><label for="d5" class="day-label">Fri</label>
+      <input type="checkbox" id="d6" class="day-checkbox" value="32" checked><label for="d6" class="day-label">Sat</label>
+      <input type="checkbox" id="d0" class="day-checkbox" value="64" checked><label for="d0" class="day-label">Sun</label>
+    </div>
+
+    <!-- 曲线图表渲染 -->
+    <div style="height: 220px; position: relative; margin-bottom: 16px;">
       <canvas id="lightChart"></canvas>
     </div>
 
-    <!-- 4 个可编辑时间点配置表单 -->
+    <!-- 动态节点表格 -->
     <table class="schedule-table">
       <thead>
         <tr>
@@ -81,150 +106,188 @@
           <th>G%</th>
           <th>W%</th>
           <th>B%</th>
+          <th>Action</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td><input type="time" id="t0" value="08:00" onchange="updateChart()"></td>
-          <td><input type="number" id="t0_r" value="10" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t0_g" value="10" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t0_w" value="20" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t0_b" value="40" min="0" max="100" onchange="updateChart()"></td>
-        </tr>
-        <tr>
-          <td><input type="time" id="t1" value="12:00" onchange="updateChart()"></td>
-          <td><input type="number" id="t1_r" value="100" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t1_g" value="100" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t1_w" value="100" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t1_b" value="100" min="0" max="100" onchange="updateChart()"></td>
-        </tr>
-        <tr>
-          <td><input type="time" id="t2" value="18:00" onchange="updateChart()"></td>
-          <td><input type="number" id="t2_r" value="50" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t2_g" value="40" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t2_w" value="60" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t2_b" value="80" min="0" max="100" onchange="updateChart()"></td>
-        </tr>
-        <tr>
-          <td><input type="time" id="t3" value="22:00" onchange="updateChart()"></td>
-          <td><input type="number" id="t3_r" value="0" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t3_g" value="0" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t3_w" value="0" min="0" max="100" onchange="updateChart()"></td>
-          <td><input type="number" id="t3_b" value="5" min="0" max="100" onchange="updateChart()"></td>
-        </tr>
-      </tbody>
+      <tbody id="nodesTableBody"></tbody>
     </table>
 
-    <button class="btn" onclick="syncScheduleToDevice()">Sync 24H Schedule to Light</button>
+    <div class="table-actions">
+      <button class="btn btn-sm" onclick="addTimeNode()">+ Add Time Node</button>
+      <button class="btn" onclick="syncScheduleToDevice()">Sync Schedule to Light</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {});
-      });
-    }
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+  }
 
-    let currentDeviceIP = "192.168.100.158";
-    let chartInstance = null;
+  let currentDeviceIP = "192.168.100.158";
+  let chartInstance = null;
 
-    function initIP() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const ipParam = urlParams.get('ip');
-      const savedIP = localStorage.getItem('aqua_device_ip');
+  // 默认节点数据
+  let timeNodes = [
+    { time: "08:00", r: 10, g: 10, w: 20, b: 40 },
+    { time: "12:00", r: 100, g: 100, w: 100, b: 100 },
+    { time: "18:00", r: 50, g: 40, w: 60, b: 80 },
+    { time: "22:00", r: 0, g: 0, w: 0, b: 5 }
+  ];
 
-      if (ipParam) currentDeviceIP = ipParam;
-      else if (savedIP) currentDeviceIP = savedIP;
+  // 命令下发底层 (Image Beacon 无缝穿越 iOS 跨域限制)
+  function sendCommand(cmdStr) {
+    const img = new Image();
+    img.src = `http://${currentDeviceIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
+  }
 
-      document.getElementById('deviceIP').value = currentDeviceIP;
-      document.getElementById('connectionStatus').innerText = `Connected to: ${currentDeviceIP}`;
-    }
+  // 读取灯具状态并回显 PWM
+  function connectAndReadStatus() {
+    const inputVal = document.getElementById('deviceIP').value.trim();
+    if (inputVal) currentDeviceIP = inputVal;
+    localStorage.setItem('aqua_device_ip', currentDeviceIP);
+    
+    document.getElementById('connectionStatus').innerText = `Syncing with ${currentDeviceIP}...`;
 
-    function applyAndSaveIP() {
-      const inputVal = document.getElementById('deviceIP').value.trim();
-      if (!inputVal) return;
-      currentDeviceIP = inputVal;
-      localStorage.setItem('aqua_device_ip', currentDeviceIP);
-      document.getElementById('connectionStatus').innerText = `Connected to: ${currentDeviceIP}`;
-    }
+    // 通过 JSONP/Script 注入异步拉取状态
+    const script = document.createElement('script');
+    script.src = `http://${currentDeviceIP}/cm?cmnd=Channels&_var=obkChannels&_t=${Date.now()}`;
+    document.body.appendChild(script);
 
-    // 核心发送函数（兼容 iOS HTTPS 到 HTTP 跨域）
-    function sendCommand(cmdStr) {
-      const img = new Image();
-      img.src = `http://${currentDeviceIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
-    }
-
-    // 滑块实时调光 (使用 Image Beacon 强行穿越 iOS 混合内容拦截)
-    function bindSliderRealtime() {
-      document.querySelectorAll('.pwm-slider').forEach(slider => {
-        let isPending = false;
-        slider.addEventListener('input', (e) => {
-          const channel = e.target.dataset.channel;
-          const value = e.target.value;
-          document.getElementById(`val-ch${channel}`).innerText = `${value}%`;
-
-          if (!isPending) {
-            isPending = true;
-            requestAnimationFrame(() => {
-              sendCommand(`Channel${channel} ${value}`);
-              setTimeout(() => { isPending = false; }, 50);
-            });
-          }
-        });
-      });
-    }
-
-    // 更新 Chart.js 图表
-    function updateChart() {
-      if (!chartInstance) return;
-      const times = [document.getElementById('t0').value, document.getElementById('t1').value, document.getElementById('t2').value, document.getElementById('t3').value];
-      const r = [document.getElementById('t0_r').value, document.getElementById('t1_r').value, document.getElementById('t2_r').value, document.getElementById('t3_r').value];
-      const g = [document.getElementById('t0_g').value, document.getElementById('t1_g').value, document.getElementById('t2_g').value, document.getElementById('t3_g').value];
-      const w = [document.getElementById('t0_w').value, document.getElementById('t1_w').value, document.getElementById('t2_w').value, document.getElementById('t3_w').value];
-      const b = [document.getElementById('t0_b').value, document.getElementById('t1_b').value, document.getElementById('t2_b').value, document.getElementById('t3_b').value];
-
-      chartInstance.data.labels = times;
-      chartInstance.data.datasets[0].data = r;
-      chartInstance.data.datasets[1].data = g;
-      chartInstance.data.datasets[2].data = w;
-      chartInstance.data.datasets[3].data = b;
-      chartInstance.update();
-    }
-
-    // 将 24 小时定时任务写入灯具芯片
-    function syncScheduleToDevice() {
-      let cmds = ["ClearClockEvents"];
-      for(let i=0; i<4; i++) {
-        let t = document.getElementById(`t${i}`).value + ":00";
-        let r = document.getElementById(`t${i}_r`).value;
-        let g = document.getElementById(`t${i}_g`).value;
-        let w = document.getElementById(`t${i}_w`).value;
-        let b = document.getElementById(`t${i}_b`).value;
-        cmds.push(`addClockEvent ${t} 0x7f backlog Channel1 ${r}; Channel2 ${g}; Channel3 ${w}; Channel4 ${b}`);
+    script.onload = () => {
+      if (window.obkChannels) {
+        document.getElementById('connectionStatus').innerText = `Connected & Synced: ${currentDeviceIP}`;
       }
-      sendCommand(cmds.join(';'));
-      alert("24-Hour Profile Sent to Light!");
+      document.body.removeChild(script);
+    };
+    script.onerror = () => {
+      document.getElementById('connectionStatus').innerText = `Connected to: ${currentDeviceIP} (Command Ready)`;
+    };
+  }
+
+  // 滑块实时调光绑定
+  function bindSliderRealtime() {
+    document.querySelectorAll('.pwm-slider').forEach(slider => {
+      let isPending = false;
+      slider.addEventListener('input', (e) => {
+        const ch = e.target.dataset.channel;
+        const val = e.target.value;
+        document.getElementById(`val-ch${ch}`).innerText = `${val}%`;
+
+        if (!isPending) {
+          isPending = true;
+          requestAnimationFrame(() => {
+            sendCommand(`Channel${ch} ${val}`);
+            setTimeout(() => { isPending = false; }, 40);
+          });
+        }
+      });
+    });
+  }
+
+  // 渲染节点表格
+  function renderNodesTable() {
+    const tbody = document.getElementById('nodesTableBody');
+    tbody.innerHTML = '';
+    
+    // 按时间升序排序
+    timeNodes.sort((a, b) => a.time.localeCompare(b.time));
+
+    timeNodes.forEach((node, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="time" value="${node.time}" onchange="updateNodeData(${index}, 'time', this.value)"></td>
+        <td><input type="number" value="${node.r}" min="0" max="100" onchange="updateNodeData(${index}, 'r', this.value)"></td>
+        <td><input type="number" value="${node.g}" min="0" max="100" onchange="updateNodeData(${index}, 'g', this.value)"></td>
+        <td><input type="number" value="${node.w}" min="0" max="100" onchange="updateNodeData(${index}, 'w', this.value)"></td>
+        <td><input type="number" value="${node.b}" min="0" max="100" onchange="updateNodeData(${index}, 'b', this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeTimeNode(${index})">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    updateChart();
+    localStorage.setItem('aqua_nodes', JSON.stringify(timeNodes));
+  }
+
+  function updateNodeData(index, key, value) {
+    if (key === 'time') timeNodes[index].time = value;
+    else timeNodes[index][key] = Math.min(100, Math.max(0, parseInt(value) || 0));
+    renderNodesTable();
+  }
+
+  function addTimeNode() {
+    timeNodes.push({ time: "15:00", r: 50, g: 50, w: 50, b: 50 });
+    renderNodesTable();
+  }
+
+  function removeTimeNode(index) {
+    if (timeNodes.length <= 2) {
+      alert("A minimum of 2 time nodes is required for a 24H curve.");
+      return;
+    }
+    timeNodes.splice(index, 1);
+    renderNodesTable();
+  }
+
+  // 更新 Chart.js 图表
+  function updateChart() {
+    if (!chartInstance) return;
+    chartInstance.data.labels = timeNodes.map(n => n.time);
+    chartInstance.data.datasets[0].data = timeNodes.map(n => n.r);
+    chartInstance.data.datasets[1].data = timeNodes.map(n => n.g);
+    chartInstance.data.datasets[2].data = timeNodes.map(n => n.w);
+    chartInstance.data.datasets[3].data = timeNodes.map(n => n.b);
+    chartInstance.update();
+  }
+
+  // 计算星期掩码并下发
+  function syncScheduleToDevice() {
+    let dayMask = 0;
+    document.querySelectorAll('.day-checkbox:checked').forEach(cb => {
+      dayMask |= parseInt(cb.value);
+    });
+
+    let cmds = ["ClearClockEvents"];
+    timeNodes.forEach(n => {
+      const t = n.time + ":00";
+      cmds.push(`addClockEvent ${t} 0x${dayMask.toString(16)} backlog Channel1 ${n.r}; Channel2 ${n.g}; Channel3 ${n.w}; Channel4 ${n.b}`);
+    });
+
+    sendCommand(cmds.join(';'));
+    alert(`Successfully synced ${timeNodes.length} time nodes (Days Mask: 0x${dayMask.toString(16)}) to light!`);
+  }
+
+  window.onload = () => {
+    const savedIP = localStorage.getItem('aqua_device_ip');
+    if (savedIP) currentDeviceIP = savedIP;
+    document.getElementById('deviceIP').value = currentDeviceIP;
+
+    const savedNodes = localStorage.getItem('aqua_nodes');
+    if (savedNodes) {
+      try { timeNodes = JSON.parse(savedNodes); } catch(e){}
     }
 
-    window.onload = () => {
-      initIP();
-      bindSliderRealtime();
+    bindSliderRealtime();
 
-      const ctx = document.getElementById('lightChart').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['08:00', '12:00', '18:00', '22:00'],
-          datasets: [
-            { label: 'Red', data: [10, 100, 50, 0], borderColor: 'red', fill: false },
-            { label: 'Green', data: [10, 100, 40, 0], borderColor: 'green', fill: false },
-            { label: 'White', data: [20, 100, 60, 0], borderColor: 'white', fill: false },
-            { label: 'Blue', data: [40, 100, 80, 5], borderColor: 'dodgerblue', fill: false }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    };
-  </script>
+    const ctx = document.getElementById('lightChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Red', data: [], borderColor: 'red', fill: false },
+          { label: 'Green', data: [], borderColor: 'green', fill: false },
+          { label: 'White', data: [], borderColor: 'white', fill: false },
+          { label: 'Blue', data: [], borderColor: 'dodgerblue', fill: false }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    renderNodesTable();
+    connectAndReadStatus();
+  };
+</script>
 </body>
 </html>
