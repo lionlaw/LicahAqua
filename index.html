@@ -53,14 +53,14 @@
       <div>
         <h1 class="text-base font-bold tracking-wider text-white flex items-center gap-2">
           PRO AQUA LIGHT
-          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.6</span>
+          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v3.0</span>
         </h1>
         <p class="text-xs text-gray-400" id="header-ip-label">Target: 192.168.100.158</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
       <button onclick="pingLight()" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1">
-        <i class="fa-solid fa-signal"></i> Test Link
+        <i class="fa-solid fa-signal"></i> Ping
       </button>
       <button onclick="toggleModal('settings-modal', true)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-gray-300 hover:text-white">
         <i class="fa-solid fa-gear"></i>
@@ -86,7 +86,7 @@
       </button>
     </section>
 
-    <!-- Schedule Group Selector (Tabs) -->
+    <!-- Schedule Profiles Tabs -->
     <section class="space-y-2">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Schedule Profiles</span>
@@ -267,43 +267,15 @@
     let targetIP = "192.168.100.158";
     let chartInstance = null;
 
-    // 🚀 JSONP 指令發送器 (使用正確的 setChannel 語法 + script 標籤穿越跨域限制)
-// 🚀 100% 穿透 iOS PWA 獨立視窗跨域限制的 Form 提交器
-function sendCommand(cmdStr) {
-  let iframe = document.getElementById('obk_bypass_iframe');
-  let form = document.getElementById('obk_bypass_form');
+    function sendCommand(cmdStr) {
+      const oldScript = document.getElementById('obk_cmd_script');
+      if (oldScript) oldScript.remove();
 
-  // 1. 動態創建隱藏 iframe
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'obk_bypass_iframe';
-    iframe.name = 'obk_bypass_iframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-  }
-
-  // 2. 動態創建隱藏 Form
-  if (!form) {
-    form = document.createElement('form');
-    form.id = 'obk_bypass_form';
-    form.method = 'GET';
-    form.target = 'obk_bypass_iframe'; // 提交到隱藏 iframe，防止主頁面刷新
-    form.style.display = 'none';
-
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'cmnd';
-    input.id = 'obk_cmd_input';
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-  }
-
-  // 3. 填入目標 IP 与 setChannel 指令并提交
-  form.action = `http://${targetIP}/cm`;
-  document.getElementById('obk_cmd_input').value = cmdStr;
-  form.submit();
-}
+      const script = document.createElement('script');
+      script.id = 'obk_cmd_script';
+      script.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
+      document.body.appendChild(script);
+    }
 
     function pingLight() {
       sendCommand("Ping");
@@ -423,22 +395,11 @@ function sendCommand(cmdStr) {
       });
     }
 
-    // 滑塊實時調光 (匹配 setChannel 指令)
-    let isPending = false;
     function updateSliderValue(ch, val) {
       const sch = getActiveSchedule();
       const value = parseInt(val);
       sch.nodes[selectedNodeIndex][ch] = value;
       document.getElementById(`val-${ch}`).innerText = `${value}%`;
-
-      const chMap = { r: 1, g: 2, w: 3, b: 4 };
-      if (!isPending) {
-        isPending = true;
-        requestAnimationFrame(() => {
-          sendCommand(`setChannel ${chMap[ch]} ${value}`);
-          setTimeout(() => { isPending = false; }, 40);
-        });
-      }
 
       refreshChartData();
       updatePayloadPreview();
@@ -492,9 +453,12 @@ function sendCommand(cmdStr) {
       showToast("Node deleted");
     }
 
-    // 生成 OpenBeken addClockEvent 腳本 (使用 setChannel 語法)
+    // 🌟 純粹生成 100% 開箱即用的 addClockEvent 腳本
     function generateOpenBekenPayload() {
-      let cmds = ["ClearClockEvents"];
+      let cmds = [
+        "ClearClockEvents" // 清除舊定時任務
+      ];
+
       schedules.forEach(sch => {
         if (sch.daysMask === 0) return;
         sch.nodes.forEach(node => {
@@ -509,22 +473,22 @@ function sendCommand(cmdStr) {
     function syncToHardware() {
       const cmds = generateOpenBekenPayload().split('\n').join(';');
       sendCommand(cmds);
-      showToast("✅ Synced 24-hour schedule to Light!");
+      showToast("✅ Synced 24H Schedule to Light!");
     }
 
-    // 🌟 快捷模式一鍵調光 (匹配 setChannel 語法)
+    // 🌟 快捷模式：100% 乾淨的 setChannel 組合指令
     function activateOverride(mode) {
       if (mode === 'normal') {
         syncToHardware();
         showToast("Restored to 24-Hour Auto Schedule");
       } else if (mode === 'viewing') {
-        sendCommand("setChannel 1 100; setChannel 2 100; setChannel 3 100; setChannel 4 100");
-        showToast("Activated View Boost Mode (100%)");
+        sendCommand("backlog setChannel 1 100; setChannel 2 100; setChannel 3 100; setChannel 4 100");
+        showToast("Activated View Boost Mode");
       } else if (mode === 'feed') {
-        sendCommand("setChannel 1 20; setChannel 2 20; setChannel 3 30; setChannel 4 10");
+        sendCommand("backlog setChannel 1 20; setChannel 2 20; setChannel 3 30; setChannel 4 10");
         showToast("Activated Feed Mode");
       } else if (mode === 'night') {
-        sendCommand("setChannel 1 0; setChannel 2 0; setChannel 3 0; setChannel 4 5");
+        sendCommand("backlog setChannel 1 0; setChannel 2 0; setChannel 3 0; setChannel 4 5");
         showToast("Activated Moonlight Mode");
       }
     }
