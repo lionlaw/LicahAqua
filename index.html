@@ -268,15 +268,42 @@
     let chartInstance = null;
 
     // 🚀 JSONP 指令發送器 (使用正確的 setChannel 語法 + script 標籤穿越跨域限制)
-    function sendCommand(cmdStr) {
-      const oldScript = document.getElementById('obk_cmd_script');
-      if (oldScript) oldScript.remove();
+// 🚀 100% 穿透 iOS PWA 獨立視窗跨域限制的 Form 提交器
+function sendCommand(cmdStr) {
+  let iframe = document.getElementById('obk_bypass_iframe');
+  let form = document.getElementById('obk_bypass_form');
 
-      const script = document.createElement('script');
-      script.id = 'obk_cmd_script';
-      script.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
-      document.body.appendChild(script);
-    }
+  // 1. 動態創建隱藏 iframe
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'obk_bypass_iframe';
+    iframe.name = 'obk_bypass_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+
+  // 2. 動態創建隱藏 Form
+  if (!form) {
+    form = document.createElement('form');
+    form.id = 'obk_bypass_form';
+    form.method = 'GET';
+    form.target = 'obk_bypass_iframe'; // 提交到隱藏 iframe，防止主頁面刷新
+    form.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'cmnd';
+    input.id = 'obk_cmd_input';
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+  }
+
+  // 3. 填入目標 IP 与 setChannel 指令并提交
+  form.action = `http://${targetIP}/cm`;
+  document.getElementById('obk_cmd_input').value = cmdStr;
+  form.submit();
+}
 
     function pingLight() {
       sendCommand("Ping");
