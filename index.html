@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>PRO AQUA LIGHT - Commercial Aquarium Controller</title>
+  <title>PRO AQUA LIGHT - Commercial Controller</title>
   
   <meta name="theme-color" content="#0b1017">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,12 +22,7 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              dark: '#0b1017',
-              card: '#141c27',
-              border: '#233044',
-              accent: '#00e5ff',
-            }
+            brand: { dark: '#0b1017', card: '#141c27', border: '#233044', accent: '#00e5ff' }
           }
         }
       }
@@ -35,47 +30,19 @@
   </script>
 
   <style>
-    body {
-      background-color: #0b1017;
-      color: #e2e8f0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      user-select: none;
-    }
-
-    .glass-card {
-      background: rgba(20, 28, 39, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    input[type=range] {
-      -webkit-appearance: none;
-      background: #1e293b;
-      border-radius: 8px;
-      height: 8px;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 22px;
-      width: 22px;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      border: 2px solid #ffffff;
-    }
+    body { background-color: #0b1017; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+    .glass-card { background: rgba(20, 28, 39, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+    input[type=range] { -webkit-appearance: none; background: #1e293b; border-radius: 8px; height: 8px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; cursor: pointer; border: 2px solid #ffffff; }
     .slider-r::-webkit-slider-thumb { background: #ff4b4b; }
     .slider-g::-webkit-slider-thumb { background: #2ecc71; }
     .slider-w::-webkit-slider-thumb { background: #f8fafc; }
     .slider-b::-webkit-slider-thumb { background: #3b82f6; }
-
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-10">
-
-  <!-- 隐藏的 Iframe 用于无感发送 HTTP 指令，绕过 HTTPS 混合内容限制 -->
-  <iframe name="cmd_target" id="cmd_target" style="display:none;"></iframe>
 
   <!-- Header -->
   <header class="sticky top-0 z-40 glass-card border-b border-brand-border px-4 py-3 flex items-center justify-between">
@@ -86,14 +53,19 @@
       <div>
         <h1 class="text-base font-bold tracking-wider text-white flex items-center gap-2">
           PRO AQUA LIGHT
-          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.4</span>
+          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase font-semibold">Pro v2.6</span>
         </h1>
         <p class="text-xs text-gray-400" id="header-ip-label">Target: 192.168.100.158</p>
       </div>
     </div>
-    <button onclick="toggleModal('settings-modal', true)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-gray-300 hover:text-white">
-      <i class="fa-solid fa-gear"></i>
-    </button>
+    <div class="flex items-center gap-2">
+      <button onclick="pingLight()" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1">
+        <i class="fa-solid fa-signal"></i> Test Link
+      </button>
+      <button onclick="toggleModal('settings-modal', true)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-gray-300 hover:text-white">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
   </header>
 
   <main class="max-w-4xl mx-auto w-full px-4 pt-4 space-y-4 flex-grow">
@@ -209,7 +181,7 @@
 
   </main>
 
-  <!-- Modals (使用纯 Inline Style 确保绝对覆盖显示) -->
+  <!-- Modals -->
   <div id="settings-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.8);" class="items-center justify-center p-4">
     <div class="glass-card max-w-md w-full rounded-2xl p-5 space-y-4 border border-slate-700">
       <div class="flex items-center justify-between border-b border-slate-700 pb-3">
@@ -295,26 +267,20 @@
     let targetIP = "192.168.100.158";
     let chartInstance = null;
 
-    // 强效穿透跨域指令发送器
-    function sendCommand(cmd) {
-      // 方法 1: Image Beacon
-      const img = new Image();
-      img.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmd)}&_t=${Date.now()}`;
+    // 🚀 JSONP 指令發送器 (使用正確的 setChannel 語法 + script 標籤穿越跨域限制)
+    function sendCommand(cmdStr) {
+      const oldScript = document.getElementById('obk_cmd_script');
+      if (oldScript) oldScript.remove();
 
-      // 方法 2: 动态 Form 提交 (彻底穿透混合内容拦截)
-      try {
-        let form = document.getElementById('cmd_form');
-        if (!form) {
-          form = document.createElement('form');
-          form.id = 'cmd_form';
-          form.method = 'GET';
-          form.target = 'cmd_target';
-          document.body.appendChild(form);
-        }
-        form.action = `http://${targetIP}/cm`;
-        form.innerHTML = `<input type="hidden" name="cmnd" value="${cmd}">`;
-        form.submit();
-      } catch(e) {}
+      const script = document.createElement('script');
+      script.id = 'obk_cmd_script';
+      script.src = `http://${targetIP}/cm?cmnd=${encodeURIComponent(cmdStr)}&_t=${Date.now()}`;
+      document.body.appendChild(script);
+    }
+
+    function pingLight() {
+      sendCommand("Ping");
+      showToast(`Ping sent to http://${targetIP}`);
     }
 
     window.onload = function() {
@@ -430,6 +396,7 @@
       });
     }
 
+    // 滑塊實時調光 (匹配 setChannel 指令)
     let isPending = false;
     function updateSliderValue(ch, val) {
       const sch = getActiveSchedule();
@@ -441,7 +408,7 @@
       if (!isPending) {
         isPending = true;
         requestAnimationFrame(() => {
-          sendCommand(`Channel${chMap[ch]} ${value}`);
+          sendCommand(`setChannel ${chMap[ch]} ${value}`);
           setTimeout(() => { isPending = false; }, 40);
         });
       }
@@ -459,12 +426,9 @@
       renderNodesList(); refreshChartData(); updatePayloadPreview();
     }
 
-    // 显示与隐藏 Modal 的稳健实现
     function toggleModal(modalId, show) {
       const modal = document.getElementById(modalId);
-      if (modal) {
-        modal.style.display = show ? 'flex' : 'none';
-      }
+      if (modal) modal.style.display = show ? 'flex' : 'none';
     }
 
     function confirmAddNode() {
@@ -501,12 +465,13 @@
       showToast("Node deleted");
     }
 
+    // 生成 OpenBeken addClockEvent 腳本 (使用 setChannel 語法)
     function generateOpenBekenPayload() {
       let cmds = ["ClearClockEvents"];
       schedules.forEach(sch => {
         if (sch.daysMask === 0) return;
         sch.nodes.forEach(node => {
-          cmds.push(`addClockEvent ${node.time}:00 0x${sch.daysMask.toString(16)} backlog Channel1 ${node.r}; Channel2 ${node.g}; Channel3 ${node.w}; Channel4 ${node.b}`);
+          cmds.push(`addClockEvent ${node.time}:00 0x${sch.daysMask.toString(16)} backlog setChannel 1 ${node.r}; setChannel 2 ${node.g}; setChannel 3 ${node.w}; setChannel 4 ${node.b}`);
         });
       });
       return cmds.join('\n');
@@ -517,21 +482,22 @@
     function syncToHardware() {
       const cmds = generateOpenBekenPayload().split('\n').join(';');
       sendCommand(cmds);
-      showToast("✅ Successfully synced 24-hour schedule to Light!");
+      showToast("✅ Synced 24-hour schedule to Light!");
     }
 
+    // 🌟 快捷模式一鍵調光 (匹配 setChannel 語法)
     function activateOverride(mode) {
       if (mode === 'normal') {
         syncToHardware();
         showToast("Restored to 24-Hour Auto Schedule");
       } else if (mode === 'viewing') {
-        sendCommand("backlog Channel1 100; Channel2 100; Channel3 100; Channel4 100");
-        showToast("Activated 30-Min High Boost Viewing Mode");
+        sendCommand("setChannel 1 100; setChannel 2 100; setChannel 3 100; setChannel 4 100");
+        showToast("Activated View Boost Mode (100%)");
       } else if (mode === 'feed') {
-        sendCommand("backlog Channel1 20; Channel2 20; Channel3 30; Channel4 10");
-        showToast("Activated Feeding Mode");
+        sendCommand("setChannel 1 20; setChannel 2 20; setChannel 3 30; setChannel 4 10");
+        showToast("Activated Feed Mode");
       } else if (mode === 'night') {
-        sendCommand("backlog Channel1 0; Channel2 0; Channel3 0; Channel4 5");
+        sendCommand("setChannel 1 0; setChannel 2 0; setChannel 3 0; setChannel 4 5");
         showToast("Activated Moonlight Mode");
       }
     }
